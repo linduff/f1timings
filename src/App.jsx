@@ -3,7 +3,8 @@ import Table from "./Table";
 
 // const openF1Endpoint = "https://api.openf1.org/v1/";
 const openF1Endpoint = "http://127.0.0.1:8000/openf1/";
-const jolpicaEndpoint = "http://127.0.0.1:8000/jolpica/";
+// const jolpicaEndpoint = "http://api.jolpi.ca/";
+// const jolpicaEndpoint = "http://127.0.0.1:8000/jolpica/";
 
 
 export default function App() {
