@@ -1,6 +1,10 @@
 import { useEffect, useState, useRef } from "react"
 import Table from "./Table";
 
+// const openF1Endpoint = "https://api.openf1.org/v1/";
+const openF1Endpoint = "http://127.0.0.1:8000/openf1/";
+const jolpicaEndpoint = "http://127.0.0.1:8000/jolpica/";
+
 
 export default function App() {
   const currYear = new Date().getFullYear();
@@ -14,7 +18,7 @@ export default function App() {
   const isMounted1 = useRef(false);
 
   useEffect(function() {
-    fetch(`https://api.openf1.org/v1/meetings?year=${year}`)
+    fetch(`${openF1Endpoint}meetings/year=${year}`)
     .then((res) => res.json())
     .then((data) => {
       setMeetingKey(data[data.length - 1].meeting_key)
@@ -25,7 +29,7 @@ export default function App() {
 
   useEffect(function() {
     if(isMounted1.current){
-      fetch(`https://api.openf1.org/v1/sessions?meeting_key=${meetingKey}`)
+      fetch(`${openF1Endpoint}sessions/meeting_key=${meetingKey}`)
       .then((res) => res.json())
       .then((data) => {
         setSessionKey(data[data.length - 1].session_key)

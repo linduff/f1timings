@@ -1,5 +1,9 @@
 import { useEffect, useState, useRef } from "react"
 
+// const openF1Endpoint = "https://api.openf1.org/v1/";
+const openF1Endpoint = "http://127.0.0.1:8000/openf1/";
+const jolpicaEndpoint = "http://127.0.0.1:8000/jolpica/";
+
 export default function Table({sessionInfo}) {
     const sessionKey = sessionInfo?.session_key;
     const [lapList, setLapList] = useState([]);
@@ -9,7 +13,7 @@ export default function Table({sessionInfo}) {
     const [positionList, setPositionList] = useState([]);
   
     useEffect(function() {
-        fetch(`https://api.openf1.org/v1/laps?session_key=${sessionKey}`)
+        fetch(`${openF1Endpoint}laps/session_key=${sessionKey}`)
         .then((res) => res.json())
         .then((data) => {
             setLapList(data);
@@ -17,7 +21,7 @@ export default function Table({sessionInfo}) {
     }, [sessionKey])
   
     useEffect(function() {
-        fetch(`https://api.openf1.org/v1/drivers?session_key=${sessionKey}`)
+        fetch(`${openF1Endpoint}drivers/session_key=${sessionKey}`)
         .then((res) => res.json())
         .then((data) => {
           setDriverList(data);
@@ -25,7 +29,7 @@ export default function Table({sessionInfo}) {
     }, [sessionKey])
   
     useEffect(function() {
-        fetch(`https://api.openf1.org/v1/pit?session_key=${sessionKey}`)
+        fetch(`${openF1Endpoint}pit/session_key=${sessionKey}`)
         .then((res) => res.json())
         .then((data) => {
           setPitList(data);
@@ -33,7 +37,7 @@ export default function Table({sessionInfo}) {
     }, [sessionKey])
 
     useEffect(function() {
-        fetch(`https://api.openf1.org/v1/race_control?session_key=${sessionKey}`)
+        fetch(`${openF1Endpoint}race_control/session_key=${sessionKey}`)
         .then((res) => res.json())
         .then((data) => {
           setRaceControlList(data);
@@ -41,7 +45,7 @@ export default function Table({sessionInfo}) {
     }, [sessionKey])
 
     useEffect(function() {
-        fetch(`https://api.openf1.org/v1/position?session_key=${sessionKey}`)
+        fetch(`${openF1Endpoint}position/session_key=${sessionKey}`)
         .then((res) => res.json())
         .then((data) => {
           setPositionList(data);
@@ -168,21 +172,19 @@ export default function Table({sessionInfo}) {
 function formatRaceClassification(lapList, driverList, pitList, positionList) {
     const practiceResults =  driverList.map((driver) => {
         const driverLaps = lapList.filter((lap) => lap.driver_number === driver.driver_number);
-        let fastestLap = 1000;
-        let finalPosition = 0
+        let finalPosition = positionList.filter((p) => p.driver_number === driver.driver_number)
+        finalPosition = finalPosition[finalPosition.length - 1]?.position
+        let totalTime = 0;
         for(var i = 0; i < driverLaps.length; i++) {
-            finalPosition = positionList.filter((p) => p.driver_number === driver.driver_number)
-            finalPosition = finalPosition[finalPosition.length - 1].position
-            // const finalTime = finalPosition[finalPosition.length - 1].date
-            if(driverLaps[i].lap_duration !== null && driverLaps[i].lap_duration < fastestLap){
-                fastestLap = driverLaps[i].lap_duration
-            }
+            totalTime += driverLaps[i].lap_duration
         }
         return {
             position: finalPosition,
             driver_name: driver.first_name + " " + driver.last_name,
             driver_number: driver.driver_number,
             team_name: driver.team_name,
+            total_time_s: totalTime,
+            total_time_mmss: convertToMMSS(totalTime),
             gap: 0,
             laps: driverLaps.length,
             pit_stops: pitList.filter((pit) => pit.driver_number === driver.driver_number).length
@@ -197,7 +199,15 @@ function formatRaceClassification(lapList, driverList, pitList, positionList) {
 }
 
 function convertToMMSS(lap) {
-    const minutes = Math.floor(lap / 60);
-    const seconds = (lap - (minutes*60)).toFixed(3)
-    return (minutes + ":" + seconds)
+    let result = ""
+    const hours = Math.floor(lap/3600)
+    const minutes = Math.floor((lap - (3600*hours)) / 60);
+    const seconds = (lap - (3600*hours) - (minutes*60)).toFixed(3)
+    if(hours > 0){
+        result += hours + ":"
+        if(minutes < 10){
+            result += "0"
+        }
+    }
+    return (result + minutes + ":" + seconds)
 }
