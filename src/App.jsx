@@ -7,14 +7,14 @@ import Table from "./Table";
 const jolpicaEndpoint = "http://127.0.0.1:8000/jolpica/";
 
 const weekendEvents = [
-  {name: "FirstPractice", label: "Practice 1"},
-  {name: "SecondPractice", label: "Practice 2"},
-  {name: "ThirdPractice", label: "Practice 3"},
-  {name: "SprintQualifying", label: "Sprint Qualifying"},
-  {name: "SprintShootout", label: "Sprint Shootout"},
-  {name: "Qualifying", label: "Qualifying"},
-  {name: "Sprint", label: "Sprint"},
-  {name: "Race", label: "Race"},
+  {name: "FirstPractice", label: "Practice 1", endpoint: "none"},
+  {name: "SecondPractice", label: "Practice 2", endpoint: "none"},
+  {name: "ThirdPractice", label: "Practice 3", endpoint: "none"},
+  {name: "SprintQualifying", label: "Sprint Qualifying", endpoint: "none"},
+  {name: "SprintShootout", label: "Sprint Shootout", endpoint: "none"},
+  {name: "Qualifying", label: "Qualifying", endpoint: "qualifying"},
+  {name: "Sprint", label: "Sprint", endpoint: "sprint"},
+  {name: "Race", label: "Race", endpoint: "results"},
 ];
 
 
@@ -39,7 +39,6 @@ export default function App() {
     }
     allEvents.push({name: "Race", id: 8, data: {date: race?.date, time: race?.time}})
     allEvents.sort((a,b) => new Date(a?.data.date + "T" + a?.data.time) - new Date(b?.data.date + "T" + b?.data.time))
-    console.log(allEvents)
     return allEvents;
   }
 
@@ -83,7 +82,7 @@ export default function App() {
         ))}
       </select>
       <span>Results</span>
-      <Table year={year} round={round} event={event}/>
+      <Table year={year} round={round} endpoint={weekendEvents[event-1]?.endpoint}/>
   </>
   )
 }

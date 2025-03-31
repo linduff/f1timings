@@ -5,7 +5,18 @@ import { useEffect, useState, useRef } from "react"
 // const jolpicaEndpoint = "http://api.jolpi.ca/";
 const jolpicaEndpoint = "http://127.0.0.1:8000/jolpica/";
 
-export default function Table({year, round, event}) {
+export default function Table({year, round, endpoint}) {
+    const [eventData, setEventData] = useState([])
+
+    useEffect(function() {
+        fetch(`${jolpicaEndpoint}ergast/f1/${year}/${round}/${endpoint}/`)
+        .then((res) => res.json())
+        .then((data) => {
+            setEventData(data);
+            console.log(data)
+        })
+    }, [endpoint])
+
     // const sessionKey = sessionInfo?.session_key;
     // const [lapList, setLapList] = useState([]);
     // const [driverList, setDriverList] = useState([]);
@@ -53,9 +64,9 @@ export default function Table({year, round, event}) {
     //     })
     // }, [sessionKey])
 
-    
 
-    if(sessionInfo?.session_type === "Qualifying") {
+
+    if(endpoint === "qualifying") {
         return (
             <table>
                 <thead>
@@ -71,23 +82,28 @@ export default function Table({year, round, event}) {
                     </tr>
                 </thead>
                 <tbody>
-                    {driverList.map((driver) => (
-                    <tr key={driver.driver_number}>
-                        <td>1</td>
-                        <td>{driver.first_name + " " + driver.last_name}</td>
-                        <td>{driver.team_name}</td>
-                        <td>1:23.456</td>
-                        <td>1:25.456</td>
-                        <td>1:22.456</td>
-                        <td>+0.112</td>
-                        <td>12</td>
+                    {eventData.MRData?.RaceTable?.Races[0].QualifyingResults?.map((driver) => (
+                    <tr key={driver.position}>
+                        <td>{driver.position}</td>
+                        <td>{driver.Driver.givenName + " " + driver.Driver.familyName}</td>
+                        <td>{driver.Constructor.name}</td>
+                        <td>{driver.hasOwnProperty("Q1") ? driver.Q1 : ""}</td>
+                        <td>{driver.hasOwnProperty("Q2") ? driver.Q2 : ""}</td>
+                        <td>{driver.hasOwnProperty("Q3") ? driver.Q3 : ""}</td>
+                        <td>{getQualifyingGap(driver, eventData.MRData?.RaceTable?.Races[0].QualifyingResults[0])}</td>
+                        <td>N/A</td>
                     </tr>
                     ))}
                 </tbody>
             </table>
         )
-    } else if(sessionInfo?.session_type === "Race") {
-        const raceResults = formatRaceClassification(lapList, driverList, pitList, positionList);
+    } else if(endpoint === "results" || endpoint === "sprint") {
+        let driverData = []
+        if(endpoint === "results") {
+            driverData = eventData.MRData?.RaceTable?.Races[0].Results
+        } else {
+            driverData = eventData.MRData?.RaceTable?.Races[0].SprintResults
+        }
         return (
             <table>
                 <thead>
@@ -100,46 +116,46 @@ export default function Table({year, round, event}) {
                     </tr>
                 </thead>
                 <tbody>
-                    {raceResults.map((driver) => (
-                    <tr key={driver.driver_number}>
+                    {driverData?.map((driver) => (
+                    <tr key={driver.position}>
                         <td>{driver.position}</td>
-                        <td>{driver.driver_name}</td>
-                        <td>{driver.team_name}</td>
-                        <td>{driver.gap}</td>
-                        <td>{driver.pit_stops}</td>
+                        <td>{driver.Driver.givenName + " " + driver.Driver.familyName}</td>
+                        <td>{driver.Constructor.name}</td>
+                        <td>{getGap(driver, driverData[0])}</td>
+                        <td>N/A</td>
                     </tr>
                     ))}
                 </tbody>
             </table>
         )
     } else {{/* Free Practice */}
-        const practiceResults = formatPracticeClassification(lapList, driverList);
-        return (
-            <table>
-                <thead>
-                    <tr>
-                        <th></th>{/* Position */}
-                        <th>Driver</th>
-                        <th>Team</th>
-                        <th>Lap Time</th>
-                        <th>Gap</th>
-                        <th>Laps</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {practiceResults.map((driver) => (
-                    <tr key={driver.position}>
-                        <td>{driver.position}</td>
-                        <td>{driver.driver_name}</td>
-                        <td>{driver.team_name}</td>
-                        <td>{driver.lap_time}</td>
-                        <td>{driver.gap}</td>
-                        <td>{driver.laps}</td>
-                    </tr>
-                    ))}
-                </tbody>
-            </table>
-        )
+        // const practiceResults = formatPracticeClassification(lapList, driverList);
+        // return (
+        //     <table>
+        //         <thead>
+        //             <tr>
+        //                 <th></th>{/* Position */}
+        //                 <th>Driver</th>
+        //                 <th>Team</th>
+        //                 <th>Lap Time</th>
+        //                 <th>Gap</th>
+        //                 <th>Laps</th>
+        //             </tr>
+        //         </thead>
+        //         {/* <tbody>
+        //             {practiceResults.map((driver) => (
+        //             <tr key={driver.position}>
+        //                 <td>{driver.position}</td>
+        //                 <td>{driver.driver_name}</td>
+        //                 <td>{driver.team_name}</td>
+        //                 <td>{driver.lap_time}</td>
+        //                 <td>{driver.gap}</td>
+        //                 <td>{driver.laps}</td>
+        //             </tr>
+        //             ))}
+        //         </tbody> */}
+        //     </table>
+        // )
     }
   }
 
@@ -214,3 +230,29 @@ export default function Table({year, round, event}) {
 //     }
 //     return (result + minutes + ":" + seconds)
 // }
+
+function getGap(driver, winner) {
+    if(driver.status === "Finished") {
+        return driver.Time.time;
+    } else if(driver.status === "Lapped") {
+        const laps = parseInt(winner.laps) - parseInt(driver.laps)
+        return `+${laps} Lap${laps > 1 ? 's' : ''}`
+    } else if(driver.status === "Disqualified") {
+        return "DSQ"
+    } else if(driver.status === "Retired") {
+        return "RET"
+    }
+}
+
+function getQualifyingGap(driver, winner) {
+    if(!driver.hasOwnProperty("Q3") || driver.number === winner.number){
+        return ""
+    } else {
+        return convertToSeconds(driver.Q3) - convertToSeconds(driver.Q3)
+    }
+}
+
+function convertToSeconds(lapTime) {
+    return 1
+
+}
