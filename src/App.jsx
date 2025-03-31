@@ -45,9 +45,6 @@ export default function App() {
     <>
       <span>F1</span>
       <select value={year} onChange={(e) => setYear(e.target.value)}>
-        <option value={currYear - 5}>{currYear - 5}</option>
-        <option value={currYear - 4}>{currYear - 4}</option>
-        <option value={currYear - 3}>{currYear - 3}</option>
         <option value={currYear - 2}>{currYear - 2}</option>
         <option value={currYear - 1}>{currYear - 1}</option>
         <option value={currYear}>{currYear}</option>
